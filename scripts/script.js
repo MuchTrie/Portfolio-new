@@ -1,0 +1,368 @@
+/* ============================================================
+   MUCH TRIE HARNANTO – PORTFOLIO SCRIPT
+   Features: Navbar, Typed Text, Carousel, Reveal, Certifications,
+             Project Filter, Contact Form, Back-to-Top
+   ============================================================ */
+
+'use strict';
+
+/* ── 1. DOM READY GUARD ──────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  initNavbar();
+  initTypedText();
+  initCarousels();
+  initReveal();
+  initProjectFilter();
+  initContactForm();
+  initBackToTop();
+  initActiveNavLink();
+});
+
+
+/* ── 2. NAVBAR (sticky scroll + hamburger) ───────────────── */
+function initNavbar() {
+  const navbar    = document.getElementById('navbar');
+  const hamburger = document.getElementById('hamburger');
+  const navMenu   = document.getElementById('nav-menu');
+  const overlay   = document.getElementById('nav-overlay');
+
+  // Add scrolled class for bg opacity change
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
+
+  // Toggle mobile menu
+  function openMenu() {
+    navMenu.classList.add('open');
+    hamburger.classList.add('open');
+    overlay.classList.add('show');
+    hamburger.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMenu() {
+    navMenu.classList.remove('open');
+    hamburger.classList.remove('open');
+    overlay.classList.remove('show');
+    hamburger.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  hamburger.addEventListener('click', () => {
+    const isOpen = navMenu.classList.contains('open');
+    isOpen ? closeMenu() : openMenu();
+  });
+
+  overlay.addEventListener('click', closeMenu);
+
+  // Close menu on nav link click (mobile)
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', closeMenu);
+  });
+
+  // ESC key closes menu
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeMenu();
+  });
+}
+
+
+/* ── 3. ACTIVE NAV LINK (IntersectionObserver) ───────────── */
+function initActiveNavLink() {
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          navLinks.forEach(link => {
+            link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
+          });
+        }
+      });
+    },
+    { rootMargin: '-40% 0px -55% 0px' }
+  );
+
+  sections.forEach(sec => observer.observe(sec));
+}
+
+
+/* ── 4. TYPED TEXT EFFECT ────────────────────────────────── */
+function initTypedText() {
+  const el = document.getElementById('typed-text');
+  if (!el) return;
+
+  const phrases = [
+    'Cybersecurity Enthusiast',
+    'Full-Stack Web Developer',
+    'Informatics Student',
+    'Cloud Computing Learner',
+  ];
+
+  let phraseIndex = 0;
+  let charIndex   = 0;
+  let isDeleting  = false;
+  let pause       = false;
+
+  function type() {
+    if (pause) return;
+
+    const currentPhrase = phrases[phraseIndex];
+
+    if (isDeleting) {
+      el.textContent = currentPhrase.slice(0, charIndex - 1);
+      charIndex--;
+    } else {
+      el.textContent = currentPhrase.slice(0, charIndex + 1);
+      charIndex++;
+    }
+
+    let delay = isDeleting ? 60 : 100;
+
+    if (!isDeleting && charIndex === currentPhrase.length) {
+      // Pause at end before deleting
+      pause = true;
+      setTimeout(() => {
+        isDeleting = true;
+        pause = false;
+        type();
+      }, 1800);
+      return;
+    }
+
+    if (isDeleting && charIndex === 0) {
+      isDeleting = false;
+      phraseIndex = (phraseIndex + 1) % phrases.length;
+      delay = 400;
+    }
+
+    setTimeout(type, delay);
+  }
+
+  type();
+}
+
+
+/* ── 5. IMAGE CAROUSELS ──────────────────────────────────── */
+function initCarousels() {
+  const carousels = document.querySelectorAll('.project-carousel');
+
+  carousels.forEach(carousel => {
+    const slides   = Array.from(carousel.querySelectorAll('.carousel-slide'));
+    const dotsWrap = carousel.querySelector('.carousel-dots');
+    const prevBtn  = carousel.querySelector('.carousel-prev');
+    const nextBtn  = carousel.querySelector('.carousel-next');
+
+    if (slides.length === 0) return;
+
+    let current = 0;
+    let autoTimer = null;
+
+    // Build dots
+    slides.forEach((_, i) => {
+      const dot = document.createElement('span');
+      dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+      dot.addEventListener('click', () => goTo(i));
+      dotsWrap.appendChild(dot);
+    });
+
+    function goTo(index) {
+      slides[current].classList.remove('active');
+      dotsWrap.children[current].classList.remove('active');
+      current = (index + slides.length) % slides.length;
+      slides[current].classList.add('active');
+      dotsWrap.children[current].classList.add('active');
+    }
+
+    function startAuto() {
+      stopAuto();
+      if (slides.length > 1) {
+        autoTimer = setInterval(() => goTo(current + 1), 3500);
+      }
+    }
+
+    function stopAuto() {
+      clearInterval(autoTimer);
+    }
+
+    prevBtn.addEventListener('click', () => { goTo(current - 1); stopAuto(); startAuto(); });
+    nextBtn.addEventListener('click', () => { goTo(current + 1); stopAuto(); startAuto(); });
+
+    // Pause auto on hover
+    carousel.addEventListener('mouseenter', stopAuto);
+    carousel.addEventListener('mouseleave', startAuto);
+
+    // Touch / swipe support
+    let touchStartX = 0;
+    carousel.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+    carousel.addEventListener('touchend', (e) => {
+      const diff = touchStartX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 40) {
+        goTo(diff > 0 ? current + 1 : current - 1);
+        stopAuto();
+        startAuto();
+      }
+    }, { passive: true });
+
+    startAuto();
+  });
+}
+
+
+/* ── 6. SCROLL REVEAL (IntersectionObserver) ─────────────── */
+function initReveal() {
+  const targets = document.querySelectorAll('.reveal, .fade-in, .fade-in-delay');
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target); // animate only once
+        }
+      });
+    },
+    { threshold: 0.12 }
+  );
+
+  targets.forEach(el => observer.observe(el));
+}
+
+
+/* ── 7. CERTIFICATIONS TOGGLE ────────────────────────────── */
+/**
+ * Called from inline onclick="toggleCert('id')" in HTML.
+ * Exposed on window for inline handler access.
+ */
+window.toggleCert = function(id) {
+  const list   = document.getElementById(id);
+  const arrow  = document.getElementById(`${id}-arrow`);
+  const header = list.previousElementSibling; // button
+
+  if (!list) return;
+
+  const isOpen = list.classList.contains('open');
+  list.classList.toggle('open', !isOpen);
+  if (arrow) arrow.classList.toggle('open', !isOpen);
+  if (header) header.setAttribute('aria-expanded', String(!isOpen));
+};
+
+
+/* ── 8. PROJECT FILTER ───────────────────────────────────── */
+function initProjectFilter() {
+  const filterBtns   = document.querySelectorAll('.filter-btn');
+  const projectCards = document.querySelectorAll('.project-card[data-category]');
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Update active button
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const filter = btn.dataset.filter;
+
+      projectCards.forEach(card => {
+        const match = filter === 'all' || card.dataset.category === filter;
+        card.style.display = match ? '' : 'none';
+        // Re-trigger reveal for filtered cards
+        if (match) card.classList.add('visible');
+      });
+    });
+  });
+}
+
+
+/* ── 9. CONTACT FORM VALIDATION ──────────────────────────── */
+function initContactForm() {
+  const form    = document.getElementById('contact-form');
+  const success = document.getElementById('form-success');
+  if (!form) return;
+
+  // Sanitize input to prevent XSS (basic defence for display purposes)
+  function sanitize(str) {
+    return str.replace(/[<>"'&]/g, (c) => ({
+      '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '&': '&amp;'
+    }[c]));
+  }
+
+  function showError(fieldId, msg) {
+    const field = document.getElementById(fieldId);
+    const errEl = document.getElementById(`${fieldId}-error`);
+    if (field)  field.classList.add('error');
+    if (errEl)  errEl.textContent = msg;
+  }
+
+  function clearError(fieldId) {
+    const field = document.getElementById(fieldId);
+    const errEl = document.getElementById(`${fieldId}-error`);
+    if (field)  field.classList.remove('error');
+    if (errEl)  errEl.textContent = '';
+  }
+
+  // Live clear on input
+  ['name', 'email', 'subject', 'message'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => clearError(id));
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    let valid = true;
+
+    const name    = document.getElementById('name').value.trim();
+    const email   = document.getElementById('email').value.trim();
+    const subject = document.getElementById('subject').value.trim();
+    const message = document.getElementById('message').value.trim();
+
+    // Validate – only clears errors for valid fields, shows for invalid
+    if (!name) { showError('name', 'Please enter your name.'); valid = false; }
+    else clearError('name');
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) { showError('email', 'Please enter your email.'); valid = false; }
+    else if (!emailRegex.test(email)) { showError('email', 'Please enter a valid email.'); valid = false; }
+    else clearError('email');
+
+    if (!subject) { showError('subject', 'Please enter a subject.'); valid = false; }
+    else clearError('subject');
+
+    if (!message || message.length < 10) {
+      showError('message', 'Message must be at least 10 characters.'); valid = false;
+    } else clearError('message');
+
+    if (!valid) return;
+
+    // Simulate send (mailto fallback)
+    const safeSubject = sanitize(subject);
+    const safeBody    = sanitize(`Name: ${name}\n\n${message}`);
+
+    // Build mailto string (safe because values are URL-encoded by encodeURIComponent)
+    const mailtoLink = `mailto:muchtrieha@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`)}`;
+    window.location.href = mailtoLink;
+
+    // Show success message
+    form.reset();
+    success.hidden = false;
+    setTimeout(() => { success.hidden = true; }, 5000);
+  });
+}
+
+
+/* ── 10. BACK TO TOP ─────────────────────────────────────── */
+function initBackToTop() {
+  const btn = document.getElementById('back-to-top');
+  if (!btn) return;
+
+  window.addEventListener('scroll', () => {
+    btn.classList.toggle('visible', window.scrollY > 400);
+  }, { passive: true });
+
+  btn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
