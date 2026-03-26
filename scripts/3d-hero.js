@@ -16,8 +16,8 @@ function initHero3D() {
     return;
   }
 
-  const scene    = new THREE.Scene();
-  const camera   = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
 
   renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -29,16 +29,16 @@ function initHero3D() {
   const SPREAD = 500;
   const CONNECTION_DIST = 120;
 
-  const positions  = new Float32Array(PARTICLE_COUNT * 3);
+  const positions = new Float32Array(PARTICLE_COUNT * 3);
   const velocities = [];
-  const colors     = new Float32Array(PARTICLE_COUNT * 3);
+  const colors = new Float32Array(PARTICLE_COUNT * 3);
 
-  const redColor   = { r: 230 / 255, g: 57 / 255, b: 70 / 255 };
+  const redColor = { r: 230 / 255, g: 57 / 255, b: 70 / 255 };
   const whiteColor = { r: 1, g: 1, b: 1 };
 
   for (let i = 0; i < PARTICLE_COUNT; i++) {
     const i3 = i * 3;
-    positions[i3]     = (Math.random() - 0.5) * SPREAD;
+    positions[i3] = (Math.random() - 0.5) * SPREAD;
     positions[i3 + 1] = (Math.random() - 0.5) * SPREAD;
     positions[i3 + 2] = (Math.random() - 0.5) * 200;
 
@@ -52,7 +52,7 @@ function initHero3D() {
     const isRed = Math.random() < 0.3;
     const c = isRed ? redColor : whiteColor;
     const brightness = isRed ? 1 : 0.3 + Math.random() * 0.3;
-    colors[i3]     = c.r * brightness;
+    colors[i3] = c.r * brightness;
     colors[i3 + 1] = c.g * brightness;
     colors[i3 + 2] = c.b * brightness;
   }
@@ -77,8 +77,8 @@ function initHero3D() {
   /* ── Connection Lines ───────────────────────────────────── */
   const MAX_LINES = 300;
   const linePositions = new Float32Array(MAX_LINES * 6);
-  const lineColors    = new Float32Array(MAX_LINES * 6);
-  const lineGeometry  = new THREE.BufferGeometry();
+  const lineColors = new Float32Array(MAX_LINES * 6);
+  const lineGeometry = new THREE.BufferGeometry();
 
   lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
   lineGeometry.setAttribute('color', new THREE.BufferAttribute(lineColors, 3));
@@ -125,14 +125,14 @@ function initHero3D() {
 
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       const i3 = i * 3;
-      pos[i3]     += velocities[i].x;
+      pos[i3] += velocities[i].x;
       pos[i3 + 1] += velocities[i].y;
       pos[i3 + 2] += velocities[i].z;
 
       // Bounce within bounds
-      if (Math.abs(pos[i3])     > SPREAD / 2) velocities[i].x *= -1;
+      if (Math.abs(pos[i3]) > SPREAD / 2) velocities[i].x *= -1;
       if (Math.abs(pos[i3 + 1]) > SPREAD / 2) velocities[i].y *= -1;
-      if (Math.abs(pos[i3 + 2]) > 100)        velocities[i].z *= -1;
+      if (Math.abs(pos[i3 + 2]) > 100) velocities[i].z *= -1;
     }
 
     particleGeometry.attributes.position.needsUpdate = true;
@@ -147,14 +147,14 @@ function initHero3D() {
         const i3 = i * 3;
         const j3 = j * 3;
 
-        const dx = pos[i3]     - pos[j3];
+        const dx = pos[i3] - pos[j3];
         const dy = pos[i3 + 1] - pos[j3 + 1];
         const dz = pos[i3 + 2] - pos[j3 + 2];
         const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
         if (dist < CONNECTION_DIST) {
           const li = lineIndex * 6;
-          lPos[li]     = pos[i3];
+          lPos[li] = pos[i3];
           lPos[li + 1] = pos[i3 + 1];
           lPos[li + 2] = pos[i3 + 2];
           lPos[li + 3] = pos[j3];
@@ -163,7 +163,7 @@ function initHero3D() {
 
           const alpha = 1 - dist / CONNECTION_DIST;
           // Red-tinted lines
-          lCol[li]     = redColor.r * alpha;
+          lCol[li] = redColor.r * alpha;
           lCol[li + 1] = redColor.g * alpha * 0.5;
           lCol[li + 2] = redColor.b * alpha * 0.5;
           lCol[li + 3] = redColor.r * alpha;
