@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initCarousels();
     initReveal();
     initCertificationModal();
+    initPdfViewer();
     initProjectFilter();
     initContactForm();
     initBackToTop();
@@ -594,4 +595,50 @@ function initTiltEffect() {
 // Globe handles its own mouse interaction via 3d-globe.js
 function initHeroParallax() {
   // No-op: replaced by 3D Globe mouse interaction
+}
+
+
+/* ── 13. PDF VIEWER MODAL ────────────────────────────────── */
+function initPdfViewer() {
+  const modal     = document.getElementById('pdf-viewer-modal');
+  const iframe    = document.getElementById('pdf-viewer-iframe');
+  const titleEl   = document.getElementById('pdf-viewer-title');
+  const closeBtn  = document.getElementById('pdf-viewer-close');
+  const backdrop  = document.getElementById('pdf-viewer-backdrop');
+
+  if (!modal || !iframe) return;
+
+  function openPdf(pdfPath, pdfTitle) {
+    titleEl.textContent = pdfTitle || 'Certificate';
+    iframe.src = pdfPath;
+    modal.hidden = false;
+    requestAnimationFrame(() => modal.classList.add('is-open'));
+    document.body.classList.add('modal-open');
+  }
+
+  function closePdf() {
+    modal.classList.remove('is-open');
+    document.body.classList.remove('modal-open');
+    setTimeout(() => {
+      modal.hidden = true;
+      iframe.src = '';       // stop loading / free memory
+    }, 280);
+  }
+
+  // Delegate: any .cert-view-pdf button anywhere in the document
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.cert-view-pdf');
+    if (!btn) return;
+    e.preventDefault();
+    const pdf   = btn.getAttribute('data-pdf');
+    const title = btn.getAttribute('data-title');
+    if (pdf) openPdf(pdf, title);
+  });
+
+  closeBtn.addEventListener('click', closePdf);
+  backdrop.addEventListener('click', closePdf);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('is-open')) closePdf();
+  });
 }
